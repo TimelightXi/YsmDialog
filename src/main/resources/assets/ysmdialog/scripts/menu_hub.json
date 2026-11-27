@@ -1,0 +1,54 @@
+{
+  "id": "menu_hub",
+  "title": "服务台",
+  "description": "选项执行命令的示例：选完就开菜单 / 发东西并立刻结束对话。",
+  "start": "hello",
+  "allowClose": true,
+  "entries": [
+    {
+      "id": "hello",
+      "speaker": {"text": "服务台 · 小满", "color": "#E8D8B0"},
+      "text": "欢迎，@i。需要我帮你办点什么？",
+      "portraits": [
+        {"path": "npc.png", "position": "CENTER", "size": 1.0, "brightness": 1.0, "animationType": "FADE"}
+      ],
+      "options": [
+        {
+          "text": "打开我的菜单",
+          "plugin_command": ["cmi menu open %player%"],
+          "close": true
+        },
+        {
+          "text": "领一份今日补给",
+          "command": [
+            "give @s minecraft:bread 8",
+            "tellraw @s {\"text\":\"[补给] 今日补给已发放\",\"color\":\"green\"}"
+          ],
+          "close": true
+        },
+        {
+          "text": "打听一下最近的事",
+          "target": "news"
+        }
+      ]
+    },
+    {
+      "id": "news",
+      "speaker": {"text": "服务台 · 小满", "color": "#E8D8B0"},
+      "text": "北边林子最近不安生，夜里别往深处走。别的就没什么了。",
+      "portraits": [
+        {"path": "npc.png", "position": "CENTER", "size": 1.0, "brightness": 0.9}
+      ],
+      "options": [
+        {
+          "text": "知道了（结束对话）",
+          "target": "end"
+        },
+        {
+          "text": "那再看看别的选项",
+          "target": "hello"
+        }
+      ]
+    }
+  ]
+}

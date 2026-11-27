@@ -1,0 +1,19 @@
+{
+  "id": "npc_daily",
+  "title": "闲聊",
+  "description": "最短的示例：说话者沿用绑定 NPC 的名字，无立绘、无选项，点两下就结束。",
+  "start": "hi",
+  "allowClose": true,
+  "entries": [
+    {
+      "id": "hi",
+      "text": "今天风向不错，适合出门。@i，你打算去哪儿？",
+      "next": "bye"
+    },
+    {
+      "id": "bye",
+      "text": "路上当心，别在夜里走林子深处。",
+      "endDialog": true
+    }
+  ]
+}

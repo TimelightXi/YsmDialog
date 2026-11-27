@@ -1,0 +1,79 @@
+{
+  "id": "quest_intro",
+  "title": "任务：林间的草药",
+  "description": "示例任务对话：立绘 + 打字机 + 选项 + 命令 + 条件可见。",
+  "start": "greet",
+  "allowClose": false,
+  "entries": [
+    {
+      "id": "greet",
+      "speaker": {"text": "艾琳", "color": "#E8D8B0"},
+      "text": "旅行者 @i，你来得正好。最近林子边上的草药被什么东西踩坏了一大片……",
+      "command": [
+        "scoreboard objectives add ysm_quest_herb dummy"
+      ],
+      "portraits": [
+        {"path": "npc.png", "position": "CENTER", "size": 1.0, "brightness": 1.0, "animationType": "SLIDE_UP"}
+      ],
+      "next": "ask"
+    },
+    {
+      "id": "ask",
+      "speaker": {"text": "艾琳", "color": "#E8D8B0"},
+      "text": "我需要十株「夜露草」来配药。你要是愿意帮忙，我按价付你工钱。",
+      "portraits": [
+        {"path": "npc.png", "position": "CENTER", "size": 1.0, "brightness": 1.0}
+      ],
+      "options": [
+        {
+          "text": "交给我吧，这就去采。",
+          "target": "accept",
+          "command": [
+            "scoreboard players set @s ysm_quest_herb 1",
+            "tellraw @s {\"text\":\"[任务] 已接受：林间的草药\",\"color\":\"aqua\"}"
+          ]
+        },
+        {
+          "text": "先跟我说说细节。",
+          "target": "detail"
+        },
+        {
+          "text": "我最近抽不开身。",
+          "target": "refuse",
+          "visibility_command": "execute unless score @s ysm_quest_herb matches 1"
+        }
+      ]
+    },
+    {
+      "id": "detail",
+      "speaker": {"text": "艾琳", "color": "#E8D8B0"},
+      "text": "夜露草只长在背光的石缝里，叶子边缘有一圈淡蓝。采的时候别连根拔，留着还能再长。",
+      "portraits": [
+        {"path": "npc.png", "position": "CENTER", "size": 1.0, "brightness": 1.0}
+      ],
+      "next": "ask"
+    },
+    {
+      "id": "accept",
+      "speaker": {"text": "艾琳", "color": "#E8D8B0"},
+      "text": "太好了！采够十株就回来找我，工钱和一小瓶恢复药水一起给你。",
+      "portraits": [
+        {"path": "npc.png", "position": "CENTER", "size": 1.0, "brightness": 1.0}
+      ],
+      "display_items": [
+        {"item": "minecraft:emerald", "count": 6},
+        {"item": "minecraft:potion", "count": 1, "nbt": "{Potion:\"minecraft:strong_healing\"}"}
+      ],
+      "endDialog": true
+    },
+    {
+      "id": "refuse",
+      "speaker": {"text": "艾琳", "color": "#E8D8B0"},
+      "text": "……好吧，那我再等等。你要是改主意了，随时来找我。",
+      "portraits": [
+        {"path": "npc.png", "position": "CENTER", "size": 1.0, "brightness": 0.8}
+      ],
+      "endDialog": true
+    }
+  ]
+}
