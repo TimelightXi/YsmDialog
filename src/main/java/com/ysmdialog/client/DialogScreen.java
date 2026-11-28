@@ -604,6 +604,11 @@ public class DialogScreen extends Screen {
     private static final java.util.Map<ResourceLocation, int[]> TEX_SIZE_CACHE = new java.util.HashMap<>();
     private static final int[] MISSING = new int[]{0, 0};
 
+    /** 配置目录下发的动态贴图：直接写入已知尺寸，省一次解码 */
+    public static void putTextureSize(ResourceLocation rl, int width, int height) {
+        TEX_SIZE_CACHE.put(rl, new int[]{width, height});
+    }
+
     private static int[] textureSize(ResourceLocation rl) {
         int[] cached = TEX_SIZE_CACHE.get(rl);
         if (cached != null) {

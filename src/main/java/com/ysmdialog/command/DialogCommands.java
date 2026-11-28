@@ -214,14 +214,22 @@ public final class DialogCommands {
                 ctx.getSource().sendSuccess(() -> Component.literal(line), false);
             });
         }
+        java.util.List<String> portraits = com.ysmdialog.dialog.DialogTextures.listPortraits();
+        final String portraitLine = "config 立绘(" + portraits.size() + "): "
+                + (portraits.isEmpty() ? "无" : String.join(", ", portraits));
+        ctx.getSource().sendSuccess(() -> Component.literal(portraitLine), false);
         return 1;
     }
 
     private static int reload(CommandContext<CommandSourceStack> ctx) {
+        com.ysmdialog.dialog.DialogSettings.load();
+        com.ysmdialog.dialog.DialogTextures.extractDefaults();
         DialogRegistry.reload(ctx.getSource().getServer());
         DialogBindings.load(ctx.getSource().getServer());
         com.ysmdialog.dialog.DialogCooldowns.load(ctx.getSource().getServer());
-        ctx.getSource().sendSuccess(() -> Component.literal("已重载 " + DialogRegistry.ids().size() + " 个脚本、绑定表与冷却表"), true);
+        ctx.getSource().sendSuccess(() -> Component.literal("已重载 " + DialogRegistry.ids().size()
+                + " 个脚本、绑定表、冷却表与设置；可用立绘 "
+                + com.ysmdialog.dialog.DialogTextures.listPortraits().size() + " 张"), true);
         return 1;
     }
 

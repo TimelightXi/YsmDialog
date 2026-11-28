@@ -38,6 +38,8 @@ public class YsmDialogMod {
     public static final class ForgeEvents {
         @SubscribeEvent
         public static void onServerStarted(ServerStartedEvent event) {
+            com.ysmdialog.dialog.DialogSettings.load();
+            com.ysmdialog.dialog.DialogTextures.extractDefaults();
             DialogRegistry.reload(event.getServer());
             com.ysmdialog.dialog.DialogBindings.load(event.getServer());
             com.ysmdialog.dialog.DialogCooldowns.load(event.getServer());

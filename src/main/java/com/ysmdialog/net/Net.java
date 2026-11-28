@@ -18,7 +18,7 @@ import java.util.Optional;
 @SuppressWarnings("removal")
 public final class Net {
 
-    private static final String VERSION = "1.1";
+    private static final String VERSION = "1.2";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(YsmDialogMod.MODID, "main"),
@@ -46,7 +46,24 @@ public final class Net {
         CHANNEL.registerMessage(id++, CloseDialogS2C.class,
                 CloseDialogS2C::encode, CloseDialogS2C::decode, CloseDialogS2C::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, TextureS2C.class,
+                TextureS2C::encode, TextureS2C::decode, TextureS2C::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         YsmDialogMod.LOG.info("[YsmDialog] 网络通道注册完成（{} 条包）", id);
+    }
+
+    /** 单块大小：32KB，避免超过 Forge 默认包长 */
+    private static final int TEXTURE_CHUNK = 32_000;
+
+    /** 把一张配置贴图分块推给客户端（必须在发 OpenDialogS2C 之前调用） */
+    public static void sendTexture(ServerPlayer player, String rl, byte[] data) {
+        int count = Math.max(1, (data.length + TEXTURE_CHUNK - 1) / TEXTURE_CHUNK);
+        for (int i = 0; i < count; i++) {
+            int from = i * TEXTURE_CHUNK;
+            int to = Math.min(data.length, from + TEXTURE_CHUNK);
+            byte[] chunk = java.util.Arrays.copyOfRange(data, from, to);
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new TextureS2C(rl, i, count, chunk));
+        }
     }
 
     public static void open(ServerPlayer player, OpenDialogS2C msg) {

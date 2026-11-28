@@ -34,13 +34,47 @@ set JAVA_HOME=C:\Program Files\Java\jdk-17
 gradlew.bat build
 ```
 
-产物：`build/libs/ysmdialog-1.0.0.jar`
+产物：`build/libs/ysmdialog-<版本>.jar`
 
 ## 安装
 
 把 jar 丢进 `mods/`（客户端与服务端都要装：服务端负责脚本/绑定/执行命令，客户端负责画界面）。
 
-首次启动会在 `config/ysmdialog/dialogs/` 释放两个示例脚本：`quest_intro.json`、`npc_daily.json`。
+首次启动会生成下面这套配置目录（改完 `/ysmdialog reload` 即可生效）：
+
+```
+config/ysmdialog/
+├─ settings.json                模组级默认值（见下）
+├─ dialogs/                     对话脚本，一个文件一条对话，文件名即脚本 id
+│   ├─ quest_intro.json
+│   └─ npc_daily.json
+└─ textures/
+    ├─ portraits/               立绘 PNG（脚本里 "path": "npc.png" 在这里找）
+    └─ backgrounds/             背景大图 PNG（background_image.path 在这里找）
+```
+
+`settings.json` 字段：
+
+| 字段 | 默认 | 说明 |
+| --- | --- | --- |
+| `defaultCooldown` | 0 | 脚本没写 `cooldown` 时的默认冷却秒数，0 = 无冷却 |
+| `defaultBlockMovement` | false | 脚本没写 `blockMovement` 时是否禁止玩家走远 |
+| `defaultEndRadius` | 0 | 脚本没写 `endRadius` 时的默认离开半径（0 = 不限） |
+| `portraitsDir` | textures/portraits | 立绘目录（相对 config/ysmdialog），可改名 |
+| `backgroundsDir` | textures/backgrounds | 背景目录，可改名 |
+| `maxTextureKB` | 4096 | 单张贴图上限，超出的不下发（防止客户端爆内存） |
+
+### 图片怎么生效
+
+贴图只放在服务端 `config/ysmdialog/textures/` 里，客户端不需要放任何文件：
+
+1. 服务端读到命中配置目录的 PNG，把脚本里的 `path` 改写成 `ysmdialog:custom/<哈希>`；
+2. 图片分块（32KB/包）随对话下发给该玩家；
+3. 客户端注册成动态纹理并缓存尺寸，界面直接用。
+
+`path` 三种写法都认：`npc.png`、`portraits/npc.png`、`textures/portraits/npc.png`。
+写带命名空间的完整路径（如 `minecraft:textures/block/stone.png`）时不会走配置目录，客户端按资源包规则读。
+改图后哈希会变（含文件大小与修改时间），客户端自动重新接收，不用清缓存。
 
 ## 命令（需要 OP，权限 2）
 
@@ -52,8 +86,8 @@ gradlew.bat build
 | `/ysmdialog bind_uuid <uuid> <脚本>` | 按 uuid 绑定（Citizens 取不到实体选择器时用这个） |
 | `/ysmdialog bind_tag <tag> <脚本>` | 按 scoreboard tag 绑定（给 NPC 打 tag 即可） |
 | `/ysmdialog unbind <实体>` / `unbind_uuid <uuid>` | 解除绑定 |
-| `/ysmdialog list` | 列出已加载脚本 + 当前绑定表 |
-| `/ysmdialog reload` | 重载脚本与绑定表 |
+| `/ysmdialog list` | 列出已加载脚本 + 当前绑定表 + config 里可用的立绘 |
+| `/ysmdialog reload` | 重载脚本、绑定表、冷却表、settings.json 与贴图目录 |
 
 别名 `/ysmd`。
 
