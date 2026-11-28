@@ -34,6 +34,17 @@ public class DialogScript {
     @SerializedName("allowClose")
     public Boolean allowClose;
 
+    /** 冷却秒数（同一玩家同一脚本），0 / 不写 = 不限制 */
+    public Integer cooldown;
+
+    /** 对话中是否限制走动：给缓慢效果，并超出 endRadius 时自动结束 */
+    @SerializedName("blockMovement")
+    public Boolean blockMovement;
+
+    /** 允许走动的半径（格），不写或 &lt;=0 表示不限 */
+    @SerializedName("endRadius")
+    public Double endRadius;
+
     public List<DialogNode> entries = new ArrayList<>();
 
     /** 运行时索引，不参与序列化 */
@@ -56,6 +67,21 @@ public class DialogScript {
 
     public boolean closeAllowed() {
         return allowClose != null && allowClose;
+    }
+
+    /** 冷却秒数，0 表示不限 */
+    public int cooldownSeconds() {
+        return cooldown == null ? 0 : Math.max(0, cooldown);
+    }
+
+    /** 是否在对话中限制走动 */
+    public boolean blocksMovement() {
+        return blockMovement != null && blockMovement;
+    }
+
+    /** 允许走动半径（格），&lt;=0 表示不限 */
+    public double radius() {
+        return endRadius == null ? 0 : Math.max(0, endRadius);
     }
 
     public DialogNode firstNode() {

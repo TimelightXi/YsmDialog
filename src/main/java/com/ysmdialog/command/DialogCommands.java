@@ -220,7 +220,8 @@ public final class DialogCommands {
     private static int reload(CommandContext<CommandSourceStack> ctx) {
         DialogRegistry.reload(ctx.getSource().getServer());
         DialogBindings.load(ctx.getSource().getServer());
-        ctx.getSource().sendSuccess(() -> Component.literal("已重载 " + DialogRegistry.ids().size() + " 个脚本与绑定表"), true);
+        com.ysmdialog.dialog.DialogCooldowns.load(ctx.getSource().getServer());
+        ctx.getSource().sendSuccess(() -> Component.literal("已重载 " + DialogRegistry.ids().size() + " 个脚本、绑定表与冷却表"), true);
         return 1;
     }
 

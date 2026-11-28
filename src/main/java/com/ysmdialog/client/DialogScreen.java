@@ -110,6 +110,17 @@ public class DialogScreen extends Screen {
         super.onClose();
     }
 
+    /** 当前显示的脚本 id（服务端下发关闭包时用来比对） */
+    public String scriptId() {
+        return scriptId;
+    }
+
+    /** 服务端主动关闭：不再回传 end 包，直接关界面 */
+    public void closeFromServer() {
+        closed = true;
+        Minecraft.getInstance().setScreen(null);
+    }
+
     // ---------------------------------------------------------------- 节点推进
 
     private void enterNode(DialogNode next) {

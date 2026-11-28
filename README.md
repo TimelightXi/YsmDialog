@@ -95,6 +95,9 @@ Citizens 的 NPC 不一定在 Forge 侧暴露成实体，最稳的接法是走 C
 | `title` / `description` | 标题、说明，`/ysmdialog list` 里会显示 |
 | `start` | 起始节点 id；不写就取 `entries[0]` |
 | `allowClose` | 是否允许 ESC 关闭。任务对话建议 `false`，强迫走完流程 |
+| `cooldown` | 冷却秒数（同一玩家同一脚本）。不写 / `0` = 不限；冷却期内重复触发会提示还剩多少秒 |
+| `blockMovement` | 是否限制走动：为 `true` 时对话中持续给 Slowness V，配合 `endRadius` 用 |
+| `endRadius` | 允许走动的半径（格）。跑出范围或换维度，服务端会下发关闭包并结束对话；`0` = 不限 |
 
 节点字段：
 
@@ -200,6 +203,7 @@ com.ysmdialog
 - `bind <实体选择器>` 依赖该 NPC 在 Forge 侧可见；纯 Bukkit 端的 Citizens NPC 请走 `bind_uuid` / `bind_tag` 或 Citizens 的命令点击。
 - `visibility_command` 用在节点上会导致按 id 跳转失效，条件判断建议优先写在选项上。
 - 服务端的命令白名单只保存"本次脚本出现过的命令"，所以脚本热重载后**已经在对话中的玩家**需要重新开一次对话才能用新命令。
+- `cooldown` 与 `blockMovement / endRadius` 由服务端强制；客户端与服务端都要装同一版本（网络协议已升到 1.1，版本不一致会被拒绝连接）。
 
 ## 致谢与声明
 

@@ -40,6 +40,7 @@ public class YsmDialogMod {
         public static void onServerStarted(ServerStartedEvent event) {
             DialogRegistry.reload(event.getServer());
             com.ysmdialog.dialog.DialogBindings.load(event.getServer());
+            com.ysmdialog.dialog.DialogCooldowns.load(event.getServer());
         }
     }
 }

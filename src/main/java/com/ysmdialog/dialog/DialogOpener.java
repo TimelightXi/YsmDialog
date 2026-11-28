@@ -28,7 +28,20 @@ public final class DialogOpener {
             return false;
         }
         DialogScript parsed = DialogScript.parse(json);
-        DialogSessions.start(viewer.getUUID(), scriptId, parsed);
+        if (parsed == null) {
+            return false;
+        }
+        // 冷却：同一玩家 + 同一脚本，冷却期内拒绝开启
+        int cooldown = parsed.cooldownSeconds();
+        long remaining = DialogCooldowns.remainingSeconds(viewer.getUUID(), scriptId);
+        if (remaining > 0) {
+            viewer.sendSystemMessage(Component.literal("§c这个对话还在冷却中，请 " + remaining + " 秒后再来。"));
+            return false;
+        }
+        DialogSessions.start(viewer, scriptId, parsed);
+        if (cooldown > 0) {
+            DialogCooldowns.mark(viewer.getUUID(), scriptId, cooldown);
+        }
 
         String speakerNameJson = null;
         int entityId = -1;

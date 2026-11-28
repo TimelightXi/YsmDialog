@@ -26,4 +26,13 @@ public final class ClientDialogs {
         Component speaker = msg.speakerNameJson == null ? null : TextUtil.fromJsonString(msg.speakerNameJson);
         Minecraft.getInstance().setScreen(new DialogScreen(msg.scriptId, script, speaker, msg.speakerEntityId));
     }
+
+    /** 服务端要求关闭：只在当前显示的就是这段脚本时关 */
+    public static void close(String scriptId) {
+        if (Minecraft.getInstance().screen instanceof DialogScreen screen) {
+            if (screen.scriptId().equals(scriptId)) {
+                screen.closeFromServer();
+            }
+        }
+    }
 }

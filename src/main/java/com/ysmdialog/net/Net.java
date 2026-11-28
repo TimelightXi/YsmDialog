@@ -18,7 +18,7 @@ import java.util.Optional;
 @SuppressWarnings("removal")
 public final class Net {
 
-    private static final String VERSION = "1.0";
+    private static final String VERSION = "1.1";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(YsmDialogMod.MODID, "main"),
@@ -43,11 +43,19 @@ public final class Net {
         CHANNEL.registerMessage(id++, DialogActionC2S.class,
                 DialogActionC2S::encode, DialogActionC2S::decode, DialogActionC2S::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(id++, CloseDialogS2C.class,
+                CloseDialogS2C::encode, CloseDialogS2C::decode, CloseDialogS2C::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         YsmDialogMod.LOG.info("[YsmDialog] 网络通道注册完成（{} 条包）", id);
     }
 
     public static void open(ServerPlayer player, OpenDialogS2C msg) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), msg);
+    }
+
+    /** 服务端主动关掉玩家当前的对话 */
+    public static void close(ServerPlayer player, String scriptId) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new CloseDialogS2C(scriptId));
     }
 
     public static void sendCommand(String scriptId, String command) {
