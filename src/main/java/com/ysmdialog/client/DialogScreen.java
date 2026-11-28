@@ -18,6 +18,7 @@ import net.minecraft.nbt.TagParser;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
@@ -67,6 +68,8 @@ public class DialogScreen extends Screen {
     private int totalChars = -1;
 
     private final List<int[]> optionRects = new ArrayList<>();
+    /** 选项区滚动偏移（像素）：GUI 缩放较大 / 选项多时，超出可视区靠滚轮上下翻 */
+    private int optionScroll;
 
     public DialogScreen(String scriptId, DialogScript script, Component speakerName, int speakerEntityId) {
         super(Component.literal(script.title == null ? "对话" : script.title));
@@ -130,6 +133,7 @@ public class DialogScreen extends Screen {
         this.lines = null;
         this.totalChars = -1;
         this.optionRects.clear();
+        this.optionScroll = 0;
 
         if (next == null) {
             closeWithEnd();
@@ -480,22 +484,55 @@ public class DialogScreen extends Screen {
         }
     }
 
+    /**
+     * 选项区几何（面板上方到屏幕顶部之间）。
+     * 返回 {rowH, gap, count, areaTop, areaBottom, contentH, maxScroll}。
+     * 放不下时先压间距、再压行高；压到最小行高仍放不下才允许滚动。
+     */
+    private int[] optionLayout(int total) {
+        int count = Math.min(total, 9);
+        int areaBottom = boxY - 12;
+        int areaTop = 6;
+        int avail = Math.max(0, areaBottom - areaTop);
+        int rowH = 22;
+        int gap = 6;
+        int contentH = count * rowH + Math.max(0, count - 1) * gap;
+        if (contentH > avail && count > 0) {
+            gap = 2;
+            rowH = Math.max(12, (avail - Math.max(0, count - 1) * gap) / count);
+            contentH = count * rowH + Math.max(0, count - 1) * gap;
+        }
+        int maxScroll = Math.max(0, contentH - avail);
+        return new int[]{rowH, gap, count, areaTop, areaBottom, contentH, maxScroll};
+    }
+
     private void renderOptions(GuiGraphics g, int mouseX, int mouseY, float appear) {
         List<DialogOption> opts = visibleOptions();
         optionRects.clear();
         if (opts.isEmpty()) {
             return;
         }
-        int rowH = 22;
-        int gap = 6;
-        int count = Math.min(opts.size(), 9);
-        int ow = Math.min(420, boxW - 30);
-        int totalH = count * rowH + (count - 1) * gap;
-        int startY = boxY - 16 - totalH;
-        int ox = (this.width - ow) / 2;
+        int[] l = optionLayout(opts.size());
+        int rowH = l[0];
+        int gap = l[1];
+        int count = l[2];
+        int areaTop = l[3];
+        int areaBottom = l[4];
+        int contentH = l[5];
+        int maxScroll = l[6];
+        optionScroll = Mth.clamp(optionScroll, 0, maxScroll);
 
+        int ow = Math.min(420, boxW - 30);
+        int ox = (this.width - ow) / 2;
+        // 放得下就贴着面板底部往上排；放不下就顶部对齐 + 滚轮翻页（默认从第 1 项开始）
+        int startY = maxScroll > 0 ? areaTop - optionScroll : areaBottom - contentH;
+
+        g.enableScissor(ox - 3, areaTop - 1, ox + ow + 3, areaBottom + 1);
         for (int i = 0; i < count; i++) {
             int ry = startY + i * (rowH + gap);
+            if (ry + rowH < areaTop || ry > areaBottom) {
+                continue;
+            }
             boolean hover = mouseX >= ox && mouseX <= ox + ow && mouseY >= ry && mouseY <= ry + rowH;
             int bg = hover ? 0xF01F2A3E : 0xC8141B28;
             g.fill(ox - 2, ry - 2, ox + ow + 2, ry + rowH + 2, 0x80000000);
@@ -511,11 +548,46 @@ public class DialogScreen extends Screen {
             g.drawString(this.font, text, tx, ty, hover ? 0xFFFFF0CC : C_TEXT, false);
             // 序号
             g.drawString(this.font, String.valueOf(i + 1), ox + 8, ty, C_TEXT_DIM, false);
-            optionRects.add(new int[]{ox, ry, ow, rowH});
+            // 只有完整落在可视区内的行才登记点击区域，避免被面板/屏幕边缘半截遮挡还能点
+            if (ry >= areaTop && ry + rowH <= areaBottom) {
+                optionRects.add(new int[]{ox, ry, ow, rowH});
+            }
+        }
+        g.disableScissor();
+
+        // 滚动提示条：有溢出时在右侧画轨道+滑块，并在上下两端各画一个小箭头
+        if (maxScroll > 0) {
+            int trackX = ox + ow + 6;
+            int trackH = areaBottom - areaTop;
+            g.fill(trackX, areaTop, trackX + 3, areaBottom, 0x40FFFFFF);
+            int thumbH = Math.max(14, trackH * trackH / Math.max(1, contentH));
+            int thumbY = areaTop + (trackH - thumbH) * optionScroll / maxScroll;
+            g.fill(trackX, thumbY, trackX + 3, thumbY + thumbH, C_ACCENT);
+            if (optionScroll > 0) {
+                g.drawString(this.font, "▲", ox + ow - 10, areaTop + 1, C_TEXT_DIM, false);
+            }
+            if (optionScroll < maxScroll) {
+                g.drawString(this.font, "▼", ox + ow - 10, areaBottom - 9, C_TEXT_DIM, false);
+            }
         }
     }
 
     // ---------------------------------------------------------------- 输入
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        // 选项溢出时滚轮上下翻（一次一格 = 行高+间距），其余情况交给父类
+        List<DialogOption> opts = visibleOptions();
+        if (!opts.isEmpty()) {
+            int[] l = optionLayout(opts.size());
+            if (l[6] > 0) {
+                int step = Math.max(10, l[0] + l[1]);
+                optionScroll = Mth.clamp(optionScroll - (int) Math.round(delta * step), 0, l[6]);
+                return true;
+            }
+        }
+        return super.mouseScrolled(mouseX, mouseY, delta);
+    }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
