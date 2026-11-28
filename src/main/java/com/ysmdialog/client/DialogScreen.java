@@ -549,8 +549,9 @@ public class DialogScreen extends Screen {
             // 序号
             g.drawString(this.font, String.valueOf(i + 1), ox + 8, ty, C_TEXT_DIM, false);
             // 只有完整落在可视区内的行才登记点击区域，避免被面板/屏幕边缘半截遮挡还能点
+            // 第 5 个元素存真实选项下标（滚动时可见行与下标不再一一对应，不能按下标数推算）
             if (ry >= areaTop && ry + rowH <= areaBottom) {
-                optionRects.add(new int[]{ox, ry, ow, rowH});
+                optionRects.add(new int[]{ox, ry, ow, rowH, i});
             }
         }
         g.disableScissor();
@@ -602,10 +603,9 @@ public class DialogScreen extends Screen {
         }
         List<DialogOption> opts = visibleOptions();
         if (!opts.isEmpty()) {
-            for (int i = 0; i < optionRects.size() && i < opts.size(); i++) {
-                int[] r = optionRects.get(i);
+            for (int[] r : optionRects) {
                 if (mouseX >= r[0] && mouseX <= r[0] + r[2] && mouseY >= r[1] && mouseY <= r[1] + r[3]) {
-                    choose(i);
+                    choose(r[4]);
                     return true;
                 }
             }
